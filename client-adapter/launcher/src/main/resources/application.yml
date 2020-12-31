@@ -20,7 +20,7 @@ canal.conf:
 #  secretKey:
   srcDataSources:
     defaultDS:
-      url: jdbc:mysql://172.26.175.153:3306/order_center?useUnicode=true
+      url: jdbc:mysql://localhost:3306/order_center?useUnicode=true
       username: root
       password: 123456
   canalAdapters:

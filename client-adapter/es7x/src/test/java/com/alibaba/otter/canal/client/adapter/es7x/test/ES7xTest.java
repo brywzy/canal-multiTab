@@ -6,9 +6,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
+import com.alibaba.otter.canal.client.adapter.support.Dml;
 import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
@@ -141,8 +141,83 @@ public class ES7xTest {
         fileWriter.close();
     }
 
+    @Test
+    public void test05(){
+        Map<String,Integer> map = new HashMap<>();
+        System.out.println(map.get("bb"));
+    }
+
+
+    @Test
+    public void test06(){
+        Dml dml01 = initDataDml01();
+        Dml dml02 = initDataDml01();
+
+        Set<Dml> dml = new HashSet<>();
+        dml.add(dml01);
+        dml.add(dml02);
+
+        System.out.println(dml);
+
+        /*Set<String> a1 = new HashSet<>();
+        a1.add("s1");
+        Set<String> a2 = new HashSet<>();
+        a2.add("s1");
+
+        a1.addAll(a2);
+        System.out.println(a1);*/
+    }
+
+
+    public Dml initDataDml01(){
+        Dml dml01 = new Dml();
+        dml01.setDestination("example");
+        dml01.setTable("order_item");
+        dml01.setDatabase("order-center");
+        dml01.setGroupId("es7");
+        dml01.setType("insert");
+        HashMap<String, Object> map01 = new HashMap<>();
+        map01.put("id","01010101");
+        map01.put("name","zs01");
+        map01.put("age","01");
+        HashMap<String, Object> map01_2 = new HashMap<>();
+        map01_2.put("id","01010101_2");
+        map01_2.put("name","zs01_2");
+        map01_2.put("age","01_2");
+        List<Map<String,Object>> list01 = new ArrayList<>();
+        list01.add(map01);
+        list01.add(map01_2);
+        dml01.setData(list01);
+        return dml01;
+    }
+
+    public Dml initDataDml02(){
+        Dml dml01 = new Dml();
+        dml01.setDestination("example");
+        dml01.setTable("order_item");
+        dml01.setDatabase("order-center");
+        dml01.setGroupId("es7");
+        dml01.setType("insert");
+        HashMap<String, Object> map01 = new HashMap<>();
+        map01.put("id","01010101");
+        map01.put("name","zs01");
+        map01.put("age","01");
+        HashMap<String, Object> map01_2 = new HashMap<>();
+        map01_2.put("id","01010101_2");
+        map01_2.put("name","zs01_2");
+        map01_2.put("age","01_2");
+        List<Map<String,Object>> list01 = new ArrayList<>();
+        list01.add(map01);
+        list01.add(map01_2);
+        dml01.setData(list01);
+        return dml01;
+    }
+
     @After
     public void after() {
         transportClient.close();
     }
+
+
+
 }

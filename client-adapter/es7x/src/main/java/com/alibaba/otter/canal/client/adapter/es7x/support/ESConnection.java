@@ -3,6 +3,9 @@ package com.alibaba.otter.canal.client.adapter.es7x.support;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
@@ -11,6 +14,7 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.elasticsearch.action.ActionFuture;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
@@ -19,9 +23,7 @@ import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.delete.DeleteRequestBuilder;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexRequestBuilder;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchRequestBuilder;
-import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.search.*;
 import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.action.update.UpdateRequestBuilder;
@@ -37,6 +39,7 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.rest.RestStatus;
+import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.slf4j.Logger;
@@ -302,6 +305,48 @@ public class ESConnection {
         }
     }
 
+    public class ESMultiSearchRequest{
+
+        private MultiSearchRequest multiSearchRequest;
+
+        public ESMultiSearchRequest(){
+            multiSearchRequest = new MultiSearchRequest();
+        }
+
+        public void addMultiSearchRequest(ESSearchRequest esSearchRequest){
+            if (mode == ESClientMode.TRANSPORT) {
+                multiSearchRequest.add(esSearchRequest.getSearchRequestBuilder());
+            } else {
+                multiSearchRequest.add(esSearchRequest.getSearchRequest());
+            }
+        }
+
+        public List<SearchHit> mSearch(){
+            MultiSearchResponse.Item[] responses = null;
+            if (mode == ESClientMode.TRANSPORT) {
+                ActionFuture<MultiSearchResponse> multiSearchResponseActionFuture = transportClient.multiSearch(multiSearchRequest);
+                responses = multiSearchResponseActionFuture.actionGet().getResponses();
+
+            } else {
+                MultiSearchResponse msearch = null;
+                try {
+                    msearch = restHighLevelClient.msearch(multiSearchRequest, RequestOptions.DEFAULT);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                responses = msearch.getResponses();
+            }
+            List<SearchHit> searchHitList = new ArrayList<>();
+            for (MultiSearchResponse.Item item : responses){
+                SearchHit[] hits = item.getResponse().getHits().getHits();
+                searchHitList.addAll(Arrays.asList(hits));
+            }
+            return searchHitList;
+        }
+
+
+    }
+
     public class ESSearchRequest {
 
         private SearchRequestBuilder searchRequestBuilder;
@@ -359,12 +404,17 @@ public class ESConnection {
         }
 
         public SearchRequest getSearchRequest() {
-            return searchRequest;
+            return searchRequest.source(sourceBuilder);
         }
 
         public void setSearchRequest(SearchRequest searchRequest) {
             this.searchRequest = searchRequest;
         }
+
+
+
+
+
     }
 
     public class ES7xBulkRequest implements ESBulkRequest {

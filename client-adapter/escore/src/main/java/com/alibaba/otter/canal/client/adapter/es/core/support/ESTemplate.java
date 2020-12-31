@@ -38,10 +38,15 @@ public interface ESTemplate {
      */
     void updateByQuery(ESSyncConfig config, Map<String, Object> paramsTmp, Map<String, Object> esFieldData, String tableName);
 
+    void updateByQueryBatch(ESSyncConfig config, List<Map<String, Object>> allEsFieldData,String tableAlias);
 
-    void secondaryUpdateByQuery(ESSyncConfig config, Map<String, Object> esFieldData, Map<String, Object> old, List<SchemaItem.FieldItem> relationSelectFieldItems, String tableName, String mainTab );
+    void secondaryUpdateByQuery(ESSyncConfig config, Map<String, Object> esFieldData, Map<String, Object> old, String tableAlias);
+
+    void secondaryUpdateByQueryBatch(ESSyncConfig config, List<Map<String, Object>> esFieldDataList, List<Map<String, Object>> oldDataList, String tableAlias);
 
     void secondaryDeleteByQuery(ESSyncConfig config, Map<String, Object> old, List<SchemaItem.FieldItem> relationSelectFieldItems,String tableAlias);
+
+    void secondaryDeleteByQueryBatch(ESSyncConfig config, List<Map<String, Object>> oldDataList,String tableAlias);
     /**
      * 通过主键删除数据
      *
@@ -50,6 +55,8 @@ public interface ESTemplate {
      * @param esFieldData 数据Map
      */
     void delete(ESMapping mapping, Object pkVal, Map<String, Object> esFieldData);
+
+    void deleteBatch(ESMapping mapping, List<Object> pkValList);
 
     /**
      * 提交批次

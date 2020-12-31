@@ -115,7 +115,7 @@ public class ESSyncConfig implements AdapterConfig {
         private Map<String,String> columnMapping=new HashMap<>();
         private Map<String,List<String>> secondaryTabRelation = new HashMap<>();
 
-        private Map<String,Map<String,String>> sqlConditionFileds = new HashMap<>();
+        private Map<String,Map<String,String>> sqlConditionFields = new HashMap<>();
 
         public String get_index() {
             return _index;
@@ -246,12 +246,12 @@ public class ESSyncConfig implements AdapterConfig {
             this.mainTab = mainTab;
         }
 
-        public Map<String, Map<String,String>> getSqlConditionFileds() {
-            return sqlConditionFileds;
+        public Map<String, Map<String,String>> getSqlConditionFields() {
+            return sqlConditionFields;
         }
 
-        public void setSqlConditionFileds(Map<String, Map<String,String>> sqlConditionFileds) {
-            this.sqlConditionFileds = sqlConditionFileds;
+        public void setSqlConditionFields(Map<String, Map<String,String>> sqlConditionFields) {
+            this.sqlConditionFields = sqlConditionFields;
         }
 
         public Map<String, String> getColumnMapping() {

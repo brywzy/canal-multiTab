@@ -1,8 +1,7 @@
 package com.alibaba.otter.canal.client.adapter.support;
 
 import java.io.Serializable;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * DML操作转换对象
@@ -141,5 +140,66 @@ public class Dml implements Serializable {
         return "Dml{" + "destination='" + destination + '\'' + ", database='" + database + '\'' + ", table='" + table
                + '\'' + ", type='" + type + '\'' + ", es=" + es + ", ts=" + ts + ", sql='" + sql + '\'' + ", data="
                + data + ", old=" + old + '}';
+    }
+
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj instanceof Dml) {
+            Dml dml = (Dml)obj;
+            if (type.equals(dml.getType()) && database.equals(dml.getDatabase())
+                    && table.equals(dml.getTable()) && destination.equals(dml.getDestination())
+                    && groupId!=null && groupId.equals(dml.getGroupId())){
+
+                Set<String> keySet = data.get(0).keySet();
+                Set<String> objKeySet = dml.getData().get(0).keySet();
+
+                if (keySet.size() != objKeySet.size()) {
+                    return false;
+                } else {
+                    for (String key : keySet){
+                        if (!objKeySet.contains(key)) return false;
+                    }
+                }
+                if (type.equalsIgnoreCase("update")){
+                    Set<String> oldKeySet = old.get(0).keySet();
+                    Set<String> objOldKeySet = dml.getOld().get(0).keySet();
+                    if (oldKeySet.size() != objOldKeySet.size()) {
+                        return false;
+                    } else {
+                        for (String key : oldKeySet){
+                            if (!objOldKeySet.contains(key)) return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+        return false;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = 1;
+        result = 31 * result + (type != null ? type.hashCode() : 0);
+        result = 31 * result + (database != null ? database.hashCode() : 0);
+        result = 31 * result + (table != null ? table.hashCode() : 0);
+        result = 31 * result + (destination != null ? destination.hashCode() : 0);
+        result = 31 * result + (groupId != null ? groupId.hashCode() : 0);
+        Set<String> keys = this.getData().get(0).keySet();
+        for (String key : keys) {
+            result = 31 * result + (key != null ? key.hashCode() : 0);
+        }
+        if (type.equalsIgnoreCase("update")){
+            Set<String> oldKeys = this.getData().get(0).keySet();
+            for (String key : oldKeys) {
+                result = 31 * result + (key != null ? key.hashCode() : 0);
+            }
+        }
+        return result;
     }
 }

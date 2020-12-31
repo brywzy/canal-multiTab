@@ -252,35 +252,13 @@ public class ESSyncUtil {
      * @param tableName
      * @return
      */
-    public static String appendSqlConditionFiled(ESMapping mapping, Map<String, Object> data,String tableName) {
+    public static String appendSqlConditionFieldByOriginal(ESMapping mapping, Map<String, Object> data,String tableName) {
 
-        Map<String,Map<String,String>> sqlConditionFileds = mapping.getSqlConditionFileds();
-        Map<String,String> sqlConditionFiled = sqlConditionFileds.get(tableName);
-        return sqlConditionFiled.get("column") + " = " + data.get(sqlConditionFiled.get("alias"));
+        Map<String,Map<String,String>> sqlConditionFields = mapping.getSqlConditionFields();
+        Map<String,String> sqlConditionFiled = sqlConditionFields.get(tableName);
+        String column = sqlConditionFiled.get("column");
+        return column + " = " + data.get(column.substring(tableName.length()+1));
     }
-
-
-    /*public static String appendSqlConditionFiled(ESMapping mapping, Map<String, Object> data,String tableName) {
-
-        // 拼接condition
-        StringBuilder conditions = new StringBuilder(" ");
-        Object conditionVal = null;
-        Map<String,List> sqlConditionFileds = mapping.getSqlConditionFileds();
-        List sqlConditionFiled = sqlConditionFileds.get(tableName);
-
-        List<String> list = (List)sqlConditionFiled;
-        for (String condition : list){
-
-            if (condition.indexOf(".")>0){
-                conditionVal = data.get(condition.split("\\.")[1]);
-            }else{
-                conditionVal = data.get(condition);
-            }
-            conditions.append(condition + " = " + conditionVal + " and ");
-        }
-        return conditions.delete(conditions.length() - 4, conditions.length()).toString();
-
-    }*/
 
     /**
      * 根据表追加指定的查询条件
@@ -289,16 +267,29 @@ public class ESSyncUtil {
      * @param tableName
      * @return
      */
-    public static Map<String,Object> appendSqlConditionFiledMap(ESMapping mapping, Map<String, Object> data,String tableName) {
+    public static Map<String,Object> appendSqlConditionFieldMap(ESMapping mapping, Map<String, Object> data,String tableName) {
 
         Map<String,Object> resultMap = new HashMap<>();
-        Map<String,Map<String,String>> sqlConditionFileds = mapping.getSqlConditionFileds();
-        Map<String,String> sqlConditionFiled = sqlConditionFileds.get(tableName);
+        Map<String,Map<String,String>> sqlConditionFields = mapping.getSqlConditionFields();
+        Map<String,String> sqlConditionFiled = sqlConditionFields.get(tableName);
         resultMap.put(sqlConditionFiled.get("column"),data.get(sqlConditionFiled.get("alias")));
         return resultMap;
     }
 
-
+    public static String appendSqlConditionFiledBatchByOriginal(ESMapping mapping, List<Map<String, Object>> dataList,String tableName) {
+        Map<String,Map<String,String>> sqlConditionFields = mapping.getSqlConditionFields();
+        Map<String,String> sqlConditionFiled = sqlConditionFields.get(tableName);
+        StringBuffer sb = new StringBuffer();
+        String column = sqlConditionFiled.get("column");
+        sb.append(column + " in (" );
+        for (Map<String,Object> data : dataList) {
+            sb.append(data.get(column.substring(tableName.length()+1)) +" ,") ;
+        }
+        int length = sb.length();
+        sb.delete(length-1,length);
+        sb.append(" )");
+        return sb.toString();
+    }
 
     /**
      *  修改时加上修改的id
@@ -310,10 +301,22 @@ public class ESSyncUtil {
      */
     public static Map<String,Object> putSqlConditionFiledByUpdate(Map<String, Object> updateData,ESMapping mapping,String tableName, Map<String,Object> data) {
 
-        Map<String,Map<String,String>> sqlConditionFileds = mapping.getSqlConditionFileds();
+        Map<String,Map<String,String>> sqlConditionFileds = mapping.getSqlConditionFields();
         Map<String,String> sqlConditionFiled = sqlConditionFileds.get(tableName);
         updateData.put(sqlConditionFiled.get("alias"),data.get(sqlConditionFiled.get("column").substring(tableName.length()+1)));
         return updateData;
+    }
+
+    public static List<Map<String,Object>> putSqlConditionFiledByUpdateBatch(List<Map<String, Object>> updateDataList,ESMapping mapping,String tableName, List<Map<String,Object>> dataList) {
+
+        Map<String,Map<String,String>> sqlConditionFileds = mapping.getSqlConditionFields();
+        Map<String,String> sqlConditionFiled = sqlConditionFileds.get(tableName);
+        for (int i=0;i<updateDataList.size();i++) {
+            Map<String, Object> updateData = updateDataList.get(i);
+            Map<String, Object> data = dataList.get(i);
+            updateData.put(sqlConditionFiled.get("alias"), data.get(sqlConditionFiled.get("column").substring(tableName.length() + 1)));
+        }
+        return updateDataList;
     }
 
     /**

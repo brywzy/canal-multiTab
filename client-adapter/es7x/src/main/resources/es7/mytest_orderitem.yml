@@ -1,0 +1,142 @@
+dataSourceKey: defaultDS        # 源数据源的key, 对应上面配置的srcDataSources中的值
+#outerAdapterKey: es1     # 对应application.yml中es配置的key
+destination: example            # cannal的instance或者MQ的topic
+groupId: g1                   # 对应MQ模式下的groupId, 只会同步对应groupId的数据
+esMapping:
+  _index: order_item           # es 的索引名称
+  #  _type: _doc                   # es 的type名称, es7下无需配置此项
+  _id: oi_id                      # es 的_id, 如果不配置该项必须配置下面的pk项_id则会由es自动分配
+  #  pk: id                       # 如果不需要_id, 则需要指定一个属性为主键属性
+  # sql映射
+  sql: "SELECT oi.sn as oi_sn,oi.id as oi_id,oi.car_number AS carNumber,oi.driver_name AS driverName,
+          oi.order_business_id AS oi_order_business_id,oi.order_broker_id AS oi_order_broker_id,
+          ob.sn AS orderBusinessSn,ob.flag AS obFlag,ob.id AS ob_id,ob.agent_user_sn AS ob_agent_user_sn,ob.order_common_id AS ob_order_common_id,
+          ul.name as u1_name,ul.d_type as ul_d_type,ul.mobile as ul_mobile,ul.user_sn AS ul_user_sn,
+          ioi.amount as ioi_amount,ioi.order_item_id AS ioi_order_item_id,ioi.id as ioi_id,
+          iboi.payment_amount as iboi_payment_amount,iboi.order_item_id AS iboi_order_item_id,iboi.id as iboi_id,
+          oc.type as oc_type,oc.id AS oc_id,
+          obb.sn AS orderBrokerSn, obb.flag AS obbFlag,obb.id AS obb_id,obb.agent_user_sn AS obb_agent_user_sn,
+          u2.name as u2_name, u2.d_type as u2_d_type,u2.mobile as u2_mobile,u2.user_sn AS u2_user_sn
+          FROM order_item oi LEFT JOIN order_business ob ON oi.order_business_id=ob.id
+          LEFT JOIN user_little ul ON ob.agent_user_sn=ul.user_sn
+          LEFT JOIN invoice_order_item ioi ON oi.id=ioi.order_item_id
+          LEFT JOIN invoice_broker_order_item iboi ON oi.id=iboi.order_item_id
+          LEFT JOIN order_common oc ON ob.order_common_id=oc.id
+          LEFT JOIN order_broker obb ON oi.order_broker_id=obb.id
+          LEFT JOIN user_little u2 ON obb.agent_user_sn=u2.user_sn"
+
+  sqlConditionFields:
+    oi:
+      column: oi.id
+      alias: oi_id
+      realColumn: id
+      sql: "SELECT oi.sn as oi_sn,oi.id as oi_id,oi.car_number AS carNumber,oi.driver_name AS driverName,
+                  oi.order_business_id AS oi_order_business_id,oi.order_broker_id AS oi_order_broker_id,
+                  ob.sn AS orderBusinessSn,ob.flag AS obFlag,ob.id AS ob_id,ob.agent_user_sn AS ob_agent_user_sn,ob.order_common_id AS ob_order_common_id,
+                  ul.name as u1_name,ul.d_type as ul_d_type,ul.mobile as ul_mobile,ul.user_sn AS ul_user_sn,
+                  ioi.amount as ioi_amount,ioi.order_item_id AS ioi_order_item_id,ioi.id as ioi_id,
+                  iboi.payment_amount as iboi_payment_amount,iboi.order_item_id AS iboi_order_item_id,iboi.id as iboi_id,
+                  oc.type as oc_type,oc.id AS oc_id,
+                  obb.sn AS orderBrokerSn, obb.flag AS obbFlag,obb.id AS obb_id,obb.agent_user_sn AS obb_agent_user_sn,
+                  u2.name as u2_name, u2.d_type as u2_d_type,u2.mobile as u2_mobile,u2.user_sn AS u2_user_sn
+                  FROM order_item oi LEFT JOIN order_business ob ON oi.order_business_id=ob.id
+                  LEFT JOIN user_little ul ON ob.agent_user_sn=ul.user_sn
+                  LEFT JOIN invoice_order_item ioi ON oi.id=ioi.order_item_id
+                  LEFT JOIN invoice_broker_order_item iboi ON oi.id=iboi.order_item_id
+                  LEFT JOIN order_common oc ON ob.order_common_id=oc.id
+                  LEFT JOIN order_broker obb ON oi.order_broker_id=obb.id
+                  LEFT JOIN user_little u2 ON obb.agent_user_sn=u2.user_sn"
+    ob:
+      column: ob.id
+      alias: ob_id
+      realColumn: id
+      sql: "SELECT oi.sn as oi_sn,oi.id as oi_id,oi.car_number AS carNumber,oi.driver_name AS driverName,
+                  oi.order_business_id AS oi_order_business_id,oi.order_broker_id AS oi_order_broker_id,
+                  ob.sn AS orderBusinessSn,ob.flag AS obFlag,ob.id AS ob_id,ob.agent_user_sn AS ob_agent_user_sn,ob.order_common_id AS ob_order_common_id,
+                  ul.name as u1_name,ul.d_type as ul_d_type,ul.mobile as ul_mobile,ul.user_sn AS ul_user_sn,
+                  oc.type as oc_type,oc.id AS oc_id
+                  FROM order_item oi LEFT JOIN order_business ob ON oi.order_business_id=ob.id
+                  LEFT JOIN user_little ul ON ob.agent_user_sn=ul.user_sn
+                  LEFT JOIN order_common oc ON ob.order_common_id=oc.id"
+    ul:
+      column: ul.user_sn
+      alias: ul_user_sn
+      realColumn: user_sn	  
+      sql: "SELECT oi.sn as oi_sn,oi.id as oi_id,oi.car_number AS carNumber,oi.driver_name AS driverName,
+                  oi.order_business_id AS oi_order_business_id,oi.order_broker_id AS oi_order_broker_id,
+                  ob.sn AS orderBusinessSn,ob.flag AS obFlag,ob.id AS ob_id,ob.agent_user_sn AS ob_agent_user_sn,ob.order_common_id AS ob_order_common_id,
+                  ul.name as u1_name,ul.d_type as ul_d_type,ul.mobile as ul_mobile,ul.user_sn AS ul_user_sn
+                  FROM order_item oi LEFT JOIN order_business ob ON oi.order_business_id=ob.id
+                  LEFT JOIN user_little ul ON ob.agent_user_sn=ul.user_sn "
+    ioi:
+      column: ioi.id
+      alias: ioi_id
+      realColumn: id	  
+      sql: "SELECT oi.sn as oi_sn,oi.id as oi_id,oi.car_number AS carNumber,oi.driver_name AS driverName,
+                  oi.order_business_id AS oi_order_business_id,oi.order_broker_id AS oi_order_broker_id,
+                  ioi.amount as ioi_amount,ioi.order_item_id AS ioi_order_item_id,ioi.id as ioi_id
+                  FROM order_item oi
+                  LEFT JOIN invoice_order_item ioi ON oi.id=ioi.order_item_id"
+    iboi:
+      column: iboi.id
+      alias: iboi_id
+      realColumn: id	  
+      sql: "SELECT oi.sn as oi_sn,oi.id as oi_id,oi.car_number AS carNumber,oi.driver_name AS driverName,
+                  oi.order_business_id AS oi_order_business_id,oi.order_broker_id AS oi_order_broker_id,
+                  iboi.payment_amount as iboi_payment_amount,iboi.order_item_id AS iboi_order_item_id,iboi.id as iboi_id
+                  FROM order_item oi
+                  LEFT JOIN invoice_broker_order_item iboi ON oi.id=iboi.order_item_id"
+    oc:
+      column: oc.id
+      alias: oc_id
+      realColumn: id	  
+      sql: "SELECT oi.sn as oi_sn,oi.id as oi_id,oi.car_number AS carNumber,oi.driver_name AS driverName,
+                  oi.order_business_id AS oi_order_business_id,oi.order_broker_id AS oi_order_broker_id,
+                  ob.sn AS orderBusinessSn,ob.flag AS obFlag,ob.id AS ob_id,ob.agent_user_sn AS ob_agent_user_sn,ob.order_common_id AS ob_order_common_id,
+                  oc.type as oc_type,oc.id AS oc_id
+                  FROM order_item oi LEFT JOIN order_business ob ON oi.order_business_id=ob.id
+                  LEFT JOIN user_little ul ON ob.agent_user_sn=ul.user_sn
+                  LEFT JOIN order_common oc ON ob.order_common_id=oc.id "
+    obb:
+      column: obb.id
+      alias: obb_id
+      realColumn: id	  
+      sql: "SELECT oi.sn as oi_sn,oi.id as oi_id,oi.car_number AS carNumber,oi.driver_name AS driverName,
+                  oi.order_business_id AS oi_order_business_id,oi.order_broker_id AS oi_order_broker_id,
+                  obb.sn AS orderBrokerSn, obb.flag AS obbFlag,obb.id AS obb_id,obb.agent_user_sn AS obb_agent_user_sn,
+                  u2.name as u2_name, u2.d_type as u2_d_type,u2.mobile as u2_mobile,u2.user_sn AS u2_user_sn
+                  FROM order_item oi
+                  LEFT JOIN order_broker obb ON oi.order_broker_id=obb.id
+                  LEFT JOIN user_little u2 ON obb.agent_user_sn=u2.user_sn"
+    u2:
+      column: u2.user_sn
+      alias: u2_user_sn
+      realColumn: user_sn	  
+      sql: "SELECT oi.sn as oi_sn,oi.id as oi_id,oi.car_number AS carNumber,oi.driver_name AS driverName,
+                  oi.order_business_id AS oi_order_business_id,oi.order_broker_id AS oi_order_broker_id,
+                  obb.sn AS orderBrokerSn, obb.flag AS obbFlag,obb.id AS obb_id,obb.agent_user_sn AS obb_agent_user_sn,
+                  u2.name as u2_name, u2.d_type as u2_d_type,u2.mobile as u2_mobile,u2.user_sn AS u2_user_sn
+                  FROM order_item oi
+                  LEFT JOIN order_broker obb ON oi.order_broker_id=obb.id
+                  LEFT JOIN user_little u2 ON obb.agent_user_sn=u2.user_sn"
+  columnMapping:
+    ob.id: ob_id
+    ob.agent_user_sn: ob_agent_user_sn
+    ul.user_sn: ul_user_sn
+    ioi.order_item_id: ioi_order_item_id
+    oi.id: oi_id
+    iboi.order_item_id: iboi_order_item_id
+    oc.id: oc_id
+    ob.order_common_id: ob_order_common_id
+    oi.order_broker_id: oi_order_broker_id
+    obb.id: obb_id
+    obb.agent_user_sn: obb_agent_user_sn
+    u2.user_sn: u2_user_sn
+  secondaryTabRelation:
+    ob: [orderBusinessSn,obFlag,ob_id,ob_agent_user_sn,ob_order_common_id, u1_name,ul_d_type,ul_mobile,ul_user_sn, oc_type,oc_id]
+    ul: [u1_name,ul_d_type,ul_mobile,ul_user_sn]
+    ioi: [ioi_amount,ioi_order_item_id,ioi_id]
+    iboi: [iboi_payment_amount,iboi_order_item_id,iboi_id]
+    oc: [oc_type,oc_id]
+    obb: [orderBrokerSn,obbFlag,obb_id,obb_agent_user_sn, u2_name,u2_d_type,u2_mobile,u2_user_sn]
+    u2: [u2_name,u2_d_type,u2_mobile,u2_user_sn]

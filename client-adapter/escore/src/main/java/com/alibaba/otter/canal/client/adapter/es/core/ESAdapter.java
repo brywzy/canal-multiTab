@@ -1,11 +1,10 @@
 package com.alibaba.otter.canal.client.adapter.es.core;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -86,19 +85,25 @@ public abstract class ESAdapter implements OuterAdapter {
 
     @Override
     public void sync(List<Dml> dmls) {
+
         if (dmls == null || dmls.isEmpty()) {
             return;
         }
-        for (Dml dml : dmls) {
-            if (!dml.getIsDdl()) {
-                sync(dml);
+        Set<Dml> operating = new HashSet<>();
+        operating.addAll(dmls);
+        if (operating.size()>1) {
+            for (Dml dml : dmls) {
+                if (!dml.getIsDdl()) {
+                    sync(dml, null);
+                }
             }
+        }else{
+            sync(dmls.get(0), dmls);
         }
         esSyncService.commit(); // 批次统一提交
-
     }
 
-    private void sync(Dml dml) {
+    private void sync(Dml dml, List<Dml> dmls) {
         String database = dml.getDatabase();
         String table = dml.getTable();
         Map<String, ESSyncConfig> configMap;
@@ -112,7 +117,7 @@ public abstract class ESAdapter implements OuterAdapter {
         }
 
         if (configMap != null && !configMap.values().isEmpty()) {
-            esSyncService.sync(configMap.values(), dml);
+            esSyncService.sync(configMap.values(), dml, dmls);
         }
     }
 

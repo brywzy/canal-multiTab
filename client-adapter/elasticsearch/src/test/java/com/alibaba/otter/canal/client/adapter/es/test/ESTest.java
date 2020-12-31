@@ -2,9 +2,13 @@ package com.alibaba.otter.canal.client.adapter.es.test;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import com.alibaba.otter.canal.client.adapter.support.Dml;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -124,6 +128,42 @@ public class ESTest {
                 }
             }
         }
+    }
+
+    @Test
+    public void test3(){
+
+        List<Dml> dmls = new ArrayList<>();
+        Dml dm1 = new Dml();
+        dm1.setDatabase("ds1");
+        dm1.setTable("order_item");
+        dmls.add(dm1);
+        Dml dm2 = new Dml();
+        dm2.setDatabase("ds1");
+        dm2.setTable("order_item");
+        dmls.add(dm2);
+        Dml dm3 = new Dml();
+        dm3.setDatabase("ds1");
+        dm3.setTable("order_item2");
+        dmls.add(dm3);
+
+        List<String> collect = dmls.stream().map(dml -> {
+            return dml.getDatabase() + "." + dml.getTable();
+        }).distinct().collect(Collectors.toList());
+
+        System.out.println(collect);
+
+
+    }
+
+    @Test
+    public void test4(){
+        StringBuffer sb = new StringBuffer();
+        sb.append("a , b ,");
+        System.out.println(sb.length());
+        sb.delete(7,7);
+
+        System.out.println(sb);
     }
 
     @After

@@ -1,6 +1,5 @@
 package com.alibaba.otter.canal.client.adapter.es7x.support;
 
-import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
@@ -16,7 +15,6 @@ import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.SearchHits;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +31,7 @@ import com.alibaba.otter.canal.client.adapter.es.core.support.ESBulkRequest.ESUp
 import com.alibaba.otter.canal.client.adapter.es.core.support.ESSyncUtil;
 import com.alibaba.otter.canal.client.adapter.es.core.support.ESTemplate;
 import com.alibaba.otter.canal.client.adapter.es7x.support.ESConnection.ESSearchRequest;
+import com.alibaba.otter.canal.client.adapter.es7x.support.ESConnection.ESMultiSearchRequest;
 import com.alibaba.otter.canal.client.adapter.support.DatasourceConfig;
 import com.alibaba.otter.canal.client.adapter.support.Util;
 
@@ -109,22 +108,15 @@ public class ES7xTemplate implements ESTemplate {
 
     @Override
     public void updateByQuery(ESSyncConfig config, Map<String, Object> paramsTmp, Map<String, Object> esFieldData,String tableName) {
-//        if (paramsTmp.isEmpty()) {
-//            return;
-//        }
         ESMapping mapping = config.getEsMapping();
         List<String> mappingFields = mapping.getSecondaryTabRelation().get(tableName);
 //        BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery();
 //        paramsTmp.forEach((fieldName, value) -> queryBuilder.must(QueryBuilders.termsQuery(fieldName, value)));
-
         // 查询sql批量更新
         DataSource ds = DatasourceConfig.DATA_SOURCES.get(config.getDataSourceKey());
-//        String sql =
-//        StringBuilder sql = new StringBuilder("SELECT * FROM (" + mapping.getSql() + ") _v WHERE ");
-        StringBuilder sql = new StringBuilder(mapping.getSql() + " WHERE ");
+        StringBuilder sql = new StringBuilder(mapping.getSqlConditionFields().get(tableName).get("sql") + " WHERE ");
 
-        Map<String, Object> sqlCondition = ESSyncUtil.appendSqlConditionFiledMap(config.getEsMapping(), esFieldData, tableName);
-//        sql.append(sqlCondition);
+        Map<String, Object> sqlCondition = ESSyncUtil.appendSqlConditionFieldMap(config.getEsMapping(), esFieldData, tableName);
         List<Object> values = new ArrayList<>();
         sqlCondition.forEach((fieldName, value) -> {
             sql.append(fieldName).append("=? AND ");
@@ -137,9 +129,6 @@ public class ES7xTemplate implements ESTemplate {
             int count = 0;
             try {
                 while (rs.next()) {
-//                    Map<String, Object> updateDoc = new LinkedHashMap<>();
-//                    Object idVal = getESDataFromRS(mapping, rs, updateDoc);
-//                    update(mapping,idVal,updateDoc);
                     for (String field : mappingFields) {
                         esFieldData.put(field, rs.getObject(field));
                     }
@@ -158,25 +147,58 @@ public class ES7xTemplate implements ESTemplate {
         }
     }
 
+    /**
+     * 次表批量更新数据
+     * @param config
+     * @param esFieldDataList 修改的新数据
+     * @param tableAlias
+     */
+    @Override
+    public void updateByQueryBatch(ESSyncConfig config, List<Map<String, Object>> esFieldDataList,String tableAlias) {
+        ESMapping mapping = config.getEsMapping();
+        List<String> mappingFields = mapping.getSecondaryTabRelation().get(tableAlias);
+        DataSource ds = DatasourceConfig.DATA_SOURCES.get(config.getDataSourceKey());
+        StringBuilder sql = new StringBuilder(mapping.getSqlConditionFields().get(tableAlias).get("sql") + " WHERE ");
+        String sqlCondition =  appendSqlConditionFiledBatch(config.getEsMapping(), esFieldDataList, tableAlias);
+        sql.append(sqlCondition);
+        Integer syncCount = (Integer) Util.sqlRS(ds, sql.toString(), null, rs -> {
+            int count = 0;
+            try {
+                while (rs.next()) {
+                    Map<String, Object> updateDate = new HashMap<>();
+                    for (String field : mappingFields) {
+                        updateDate.put(field, rs.getObject(field));
+                    }
+                    Object idVal = getIdValFromRS(mapping, rs);
+                    append4Update(mapping, idVal, updateDate);
+                    count++;
+                }
+                commit();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            return count;
+        });
+        if (logger.isTraceEnabled()) {
+            logger.trace("Update ES by query affected {} records", syncCount);
+        }
+    }
 
     /**
      * 修改次表的关联条件时的处理
      * @param config
      * @param esFieldData
      * @param old
-     * @param relationSelectFieldItems
-     * @param tableName
-     * @param mainTab
+     * @param tableAlias
      */
     @Override
-    public void secondaryUpdateByQuery(ESSyncConfig config, Map<String, Object> esFieldData, Map<String, Object> old, List<FieldItem> relationSelectFieldItems, String tableName, String mainTab) {
+    public void secondaryUpdateByQuery(ESSyncConfig config, Map<String, Object> esFieldData, Map<String, Object> old, String tableAlias) {
         ESMapping esMapping = config.getEsMapping();
-        List<String> mappingFields = esMapping.getSecondaryTabRelation().get(tableName);
+        List<String> mappingFields = esMapping.getSecondaryTabRelation().get(tableAlias);
         // 查询sql批量更新
         DataSource ds = DatasourceConfig.DATA_SOURCES.get(config.getDataSourceKey());
-        StringBuilder sql = new StringBuilder(esMapping.getSql() + " WHERE ");
-
-        Map<String, Object> sqlCondition = ESSyncUtil.appendSqlConditionFiledMap(config.getEsMapping(), esFieldData, tableName);
+        StringBuilder sql = new StringBuilder(esMapping.getSqlConditionFields().get(tableAlias).get("sql") + " WHERE ");
+        Map<String, Object> sqlCondition = ESSyncUtil.appendSqlConditionFieldMap(config.getEsMapping(), esFieldData, tableAlias);
         List<Object> values = new ArrayList<>();
         sqlCondition.forEach((fieldName, value) -> {
             sql.append(fieldName).append("=? AND ");
@@ -188,11 +210,12 @@ public class ES7xTemplate implements ESTemplate {
             int count = 0;
             try {
                 while (rs.next()) {
+                    Map<String,Object> esData = new HashMap<>();
                     for (String field : mappingFields) {
-                        esFieldData.put(field, rs.getObject(field));
+                        esData.put(field, rs.getObject(field));
                     }
                     Object idVal = getIdValFromRS(esMapping, rs);
-                    append4Update(esMapping, idVal, esFieldData);
+                    append4Update(esMapping, idVal, esData);
                     commit();
                     count++;
                 }
@@ -227,17 +250,79 @@ public class ES7xTemplate implements ESTemplate {
             esUpdateRequest.setDoc(sourceAsMap);
             getBulk().add(esUpdateRequest);
         }
-        commitBulk();
+        commit();
 
         if (logger.isTraceEnabled()) {
             logger.trace("Update ES by query affected {} records", syncCount);
         }
     }
 
+    /**
+     * 次表更新，有关联字段被修改
+     * @param config
+     * @param esFieldDataList 关联字段更新后的新数据
+     * @param oldDataList 关联字段更新前的旧数据
+     * @param tableAlias
+     */
+    @Override
+    public void secondaryUpdateByQueryBatch(ESSyncConfig config, List<Map<String, Object>> esFieldDataList, List<Map<String, Object>> oldDataList, String tableAlias) {
+        ESMapping esMapping = config.getEsMapping();
+        List<String> mappingFields = esMapping.getSecondaryTabRelation().get(tableAlias);
+        // 查询sql批量更新
+        DataSource ds = DatasourceConfig.DATA_SOURCES.get(config.getDataSourceKey());
+        StringBuilder sql = new StringBuilder(esMapping.getSqlConditionFields().get(tableAlias).get("sql") + " WHERE ");
+        String sqlCondition = appendSqlConditionFiledBatch(config.getEsMapping(), esFieldDataList, tableAlias);
+        sql.append(sqlCondition);
+        Integer syncCount = (Integer) Util.sqlRS(ds, sql.toString(), null, rs -> {
+            int count = 0;
+            try {
+                while (rs.next()) {
+                    Map<String,Object> esData = new HashMap<>();
+                    for (String field : mappingFields) {
+                        esData.put(field, rs.getObject(field));
+                    }
+                    Object idVal = getIdValFromRS(esMapping, rs);
+                    append4Update(esMapping, idVal, esData);
+                    commit();
+                    count++;
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            return count;
+        });
 
+        String index = esMapping.get_index();
+        ESMultiSearchRequest esMultiSearchRequest = this.esConnection.new ESMultiSearchRequest();
+        for (Map<String,Object> oldData:oldDataList ) {
+            ESSearchRequest esSearchRequest = this.esConnection.new ESSearchRequest(index);
+            esSearchRequest.size(100000);
+            BoolQueryBuilder mustQuery = QueryBuilders.boolQuery();
+            for (Map.Entry<String, Object> entry : oldData.entrySet()) {
+                mustQuery.filter(QueryBuilders.termQuery(entry.getKey(), entry.getValue()));
+            }
+            esSearchRequest.setQuery(mustQuery);
+            esMultiSearchRequest.addMultiSearchRequest(esSearchRequest);
+        }
+        List<SearchHit> allSearchHit = esMultiSearchRequest.mSearch();
+        if (allSearchHit.size()==0){
+            return;
+        }
+        for (SearchHit searchHit : allSearchHit){
+            Map<String, Object> sourceAsMap = searchHit.getSourceAsMap();
+            for (String field:mappingFields) {
+                sourceAsMap.put(field, null);
+            }
+            ESConnection.ES7xUpdateRequest esUpdateRequest = this.esConnection.new ES7xUpdateRequest(index, searchHit.getId());
+            esUpdateRequest.setDoc(sourceAsMap);
+            getBulk().add(esUpdateRequest);
+        }
+        commit();
 
-
-
+        if (logger.isTraceEnabled()) {
+            logger.trace("Update ES by query affected {} records", syncCount);
+        }
+    }
 
     /**
      * 删除次表时的处理,不考虑一对多的场景
@@ -258,11 +343,9 @@ public class ES7xTemplate implements ESTemplate {
         esSearchRequest.setQuery(mustQuery);
         SearchResponse response = esSearchRequest.getResponse();
         SearchHit[] hits = response.getHits().getHits();
-
         if (hits.length==0){
             return;
         }
-
         List<String> mappingFields = esMapping.getSecondaryTabRelation().get(tableAlias);
         for (SearchHit searchHit : hits){
 
@@ -275,7 +358,6 @@ public class ES7xTemplate implements ESTemplate {
             esUpdateRequest.setDoc(sourceAsMap);
             getBulk().add(esUpdateRequest);
         }
-
         commit();
 
         if (logger.isTraceEnabled()) {
@@ -284,121 +366,46 @@ public class ES7xTemplate implements ESTemplate {
 
     }
 
-    public void secondaryUpdateByQuerybak(ESSyncConfig config, Map<String, Object> esFieldData, String tableName, Map<String, Object> old, List<FieldItem> relationSelectFieldItems,String mainTab) {
+    /**
+     * 次表删除
+     * @param config
+     * @param oldDataList 删除前的旧数据
+     * @param tableAlias
+     */
+    @Override
+    public void secondaryDeleteByQueryBatch(ESSyncConfig config, List<Map<String, Object>> oldDataList, String tableAlias) {
         ESMapping esMapping = config.getEsMapping();
+        String index = esMapping.get_index();
 
-
-        // 查询sql批量更新
-        DataSource ds = DatasourceConfig.DATA_SOURCES.get(config.getDataSourceKey());
-        StringBuilder sql = new StringBuilder(esMapping.getSql() + " WHERE ");
-
-        Map<String, Object> sqlCondition = ESSyncUtil.appendSqlConditionFiledMap(config.getEsMapping(), esFieldData, tableName);
-        List<Object> values = new ArrayList<>();
-        sqlCondition.forEach((fieldName, value) -> {
-            sql.append(fieldName).append("=? AND ");
-            values.add(value);
-        });
-        int len = sql.length();
-        sql.delete(len - 4, len);
-        Integer syncCount = (Integer) Util.sqlRS(ds, sql.toString(), values, rs -> {
-            int count = 0;
-            try {
-                while (rs.next()) {
-                    for (FieldItem fieldItem : relationSelectFieldItems) {
-                        fieldItem.getColumnItems().forEach(columnItem ->
-                        {
-                            try {
-                                esFieldData.put(columnItem.getColumnName(), rs.getObject(columnItem.getColumnName()));
-                            } catch (SQLException e) {
-                                e.printStackTrace();
-                            }
-                        });
-                    }
-                    Object idVal = getIdValFromRS(esMapping, rs);
-                    append4Update(esMapping, idVal, esFieldData);
-                    commitBulk();
-                    count++;
-                }
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-            return count;
-        });
-
-        if(syncCount<=0){
-
-            String index = esMapping.get_index();
+        ESMultiSearchRequest esMultiSearchRequest = this.esConnection.new ESMultiSearchRequest();
+        for (Map<String,Object> oldData:oldDataList ) {
             ESSearchRequest esSearchRequest = this.esConnection.new ESSearchRequest(index);
             esSearchRequest.size(100000);
             BoolQueryBuilder mustQuery = QueryBuilders.boolQuery();
-            for (Map.Entry<String, Object> entry : old.entrySet()){
-                mustQuery.filter(QueryBuilders.termQuery(entry.getKey(),entry.getValue()));
+            for (Map.Entry<String, Object> entry : oldData.entrySet()) {
+                mustQuery.filter(QueryBuilders.termQuery(entry.getKey(), entry.getValue()));
             }
             esSearchRequest.setQuery(mustQuery);
-            SearchResponse response = esSearchRequest.getResponse();
-            SearchHit[] hits = response.getHits().getHits();
-
-            if (hits.length==0){
-                return;
-            }
-
-            for (SearchHit searchHit : hits){
-                //一对多特殊处理
-                String hitId = searchHit.getId();
-                StringBuilder mainSql = new StringBuilder(esMapping.getSql() + " WHERE ");
-                Map<String,Map<String,String>> sqlConditionFileds = esMapping.getSqlConditionFileds();
-                Map<String,Object> queryFileds = new HashMap<>();
-                queryFileds.put(sqlConditionFileds.get(mainTab).get("column"),hitId);
-
-                List<Object> mainQueryValues = new ArrayList<>();
-                queryFileds.forEach((fieldName, value) -> {
-                    mainSql.append(fieldName).append("=? AND ");
-                    mainQueryValues.add(value);
-                });
-                int mainQuerylen = mainSql.length();
-                mainSql.delete(mainQuerylen - 4, mainQuerylen);
-                Util.sqlRS(ds, mainSql.toString(), mainQueryValues, rs -> {
-                    int count = 0;
-                    try {
-                        while (rs.next()) {
-                            for (FieldItem fieldItem : relationSelectFieldItems) {
-                                fieldItem.getColumnItems().forEach(columnItem -> {
-                                    try {
-                                        esFieldData.put(columnItem.getColumnName(), rs.getObject(columnItem.getColumnName()));
-                                    } catch (SQLException e) {
-                                        e.printStackTrace();
-                                    }
-                                });
-                            }
-                            append4Update(esMapping, hitId, esFieldData);
-                            commitBulk();
-                            count++;
-                        }
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                    return count;
-                });
-
-
-
-
-
-
-//                for (FieldItem fieldItem : relationSelectFieldItems) {
-//                    fieldItem.getColumnItems().forEach(columnItem -> sourceAsMap.put(columnItem.getColumnName(), null));
-//                }
-//
-//                ESConnection.ES7xUpdateRequest esUpdateRequest = this.esConnection.new ES7xUpdateRequest(index, searchHit.getId());
-//                esUpdateRequest.setDoc(sourceAsMap);
-//                getBulk().add(esUpdateRequest);
-            }
-//            commitBulk();
+            esMultiSearchRequest.addMultiSearchRequest(esSearchRequest);
         }
+        List<SearchHit> searchHitList = esMultiSearchRequest.mSearch();
+        if (searchHitList.size()==0) return;
+        List<String> mappingFields = esMapping.getSecondaryTabRelation().get(tableAlias);
+        for (SearchHit searchHit : searchHitList){
+            Map<String, Object> sourceAsMap = searchHit.getSourceAsMap();
+            for (String field: mappingFields) {
+                sourceAsMap.put(field, null);
+            }
+            ESUpdateRequest esUpdateRequest = this.esConnection.new ES7xUpdateRequest(index, searchHit.getId());
+            esUpdateRequest.setDoc(sourceAsMap);
+            getBulk().add(esUpdateRequest);
+        }
+        commit();
 
         if (logger.isTraceEnabled()) {
-            logger.trace("Update ES by query affected {} records", syncCount);
+            logger.trace("Update ES by query affected {} records", searchHitList.size());
         }
+
     }
 
     @Override
@@ -420,6 +427,16 @@ public class ES7xTemplate implements ESTemplate {
                 commitBulk();
             }
         }
+    }
+
+    @Override
+    public void deleteBatch(ESMapping mapping, List<Object> pkValList){
+        for (Object pkVal : pkValList) {
+            ESDeleteRequest esDeleteRequest = this.esConnection.new ES7xDeleteRequest(mapping.get_index(),
+                    pkVal.toString());
+            getBulk().add(esDeleteRequest);
+        }
+        commitBulk();
     }
 
     @Override
@@ -446,7 +463,6 @@ public class ES7xTemplate implements ESTemplate {
                 value = resultSet.getByte(columnName);
             }
         }
-
         // 如果是对象类型
         if (mapping.getObjFields().containsKey(fieldName)) {
             return ESSyncUtil.convertToEsObj(value, mapping.getObjFields().get(fieldName));
@@ -717,5 +733,26 @@ public class ES7xTemplate implements ESTemplate {
                 esFieldData.put(relationField, relations);
             });
         }
+    }
+
+    private String appendSqlConditionFiledBatch(ESMapping mapping, List<Map<String, Object>> dataList,String tableName) {
+        Map<String,Map<String,String>> sqlConditionFields = mapping.getSqlConditionFields();
+        Map<String,String> sqlConditionFiled = sqlConditionFields.get(tableName);
+
+        StringBuffer sb = new StringBuffer();
+        sb.append(sqlConditionFiled.get("column") + " in (" );
+        String alias = sqlConditionFiled.get("alias");
+        String esType = getEsType(mapping, alias);
+        for (Map<String,Object> data : dataList) {
+            if (esType.equalsIgnoreCase("keyword")){
+                sb.append("'"+data.get(alias) + "' ,");
+            }else {
+                sb.append(data.get(alias) + " ,");
+            }
+        }
+        int length = sb.length();
+        sb.delete(length-1,length);
+        sb.append(" )");
+        return sb.toString();
     }
 }
