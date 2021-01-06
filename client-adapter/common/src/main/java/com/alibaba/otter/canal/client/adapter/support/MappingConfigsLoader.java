@@ -19,8 +19,8 @@ public class MappingConfigsLoader {
         if (!configDir.exists()) {
             URL url = MappingConfigsLoader.class.getClassLoader().getResource("");
             if (url != null) {
-//                configDir = new File(url.getPath() + name + File.separator);
-                configDir = new File("E:\\soft\\canal\\canal.adapter-1.1.4\\conf\\"+ name + File.separator);
+                configDir = new File(url.getPath() + name + File.separator);
+//                configDir = new File("E:\\soft\\canal\\canal.adapter-1.1.4\\conf\\"+ name + File.separator);
             }
         }
 
