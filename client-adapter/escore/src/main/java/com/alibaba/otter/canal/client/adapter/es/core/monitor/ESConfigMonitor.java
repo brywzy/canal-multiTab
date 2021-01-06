@@ -68,6 +68,7 @@ public class ESConfigMonitor {
                     ESSyncConfig.class,
                     null,
                     envProperties);
+                config.setEsVersion(envProperties.getProperty("es.version"));
                 if (config != null) {
                     config.validate();
                     addConfigToCache(file, config);
@@ -96,6 +97,7 @@ public class ESConfigMonitor {
                         ESSyncConfig.class,
                         null,
                         envProperties);
+                    config.setEsVersion(envProperties.getProperty("es.version"));
                     if (config == null) {
                         return;
                     }

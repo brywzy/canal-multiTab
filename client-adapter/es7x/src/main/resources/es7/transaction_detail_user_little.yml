@@ -1,0 +1,52 @@
+dataSourceKey: payCenter        # 源数据源的key, 对应上面配置的srcDataSources中的值
+#outerAdapterKey: es1     # 对应application.yml中es配置的key
+destination: example            # cannal的instance或者MQ的topic
+groupId: g1                   # 对应MQ模式下的groupId, 只会同步对应groupId的数据
+esMapping:
+  _index: transaction_detail           # es 的索引名称
+  #  _type: _doc                   # es 的type名称, es7下无需配置此项
+  _id: id                      # es 的_id, 如果不配置该项必须配置下面的pk项_id则会由es自动分配
+  #  pk: id                       # 如果不需要_id, 则需要指定一个属性为主键属性
+  # sql映射
+  sql: "SELECT td.id AS id,td.transaction_sn as transactionSn, td.user_sn AS userSn, td.type,
+        td.business_sn AS businessSn, td.amount, td.status,td.time,
+        td.flag, td.mark , td.old_flag AS oldFlag , td.after_balance_amount AS afterBalanceAmount ,
+        td.operator_userid AS operatorUserid , td.is_replenishment AS isReplenishment , td.out_user_sn AS outUserSn ,
+        td.final_statements_sn AS finalStatementsSn , td.business_type AS businessType , td.dd_orderno AS ddOrderno ,
+        td.jj_orderno AS jjOrderno , td.yd_orderno AS ydOrderno , td.invoice_sn AS invoiceSn,
+        u.user_id AS userId,u.user_sn AS uUserSn,u.d_type AS dType,u.name,u.mobile
+        FROM pay_center.transaction_detail td
+        LEFT JOIN pay_center.user_little u ON td.user_sn = u.user_sn"
+
+  sqlConditionFields:
+    td:
+      column: td.id
+      alias: id
+      realColumn: id
+      sql: "SELECT td.id AS id,td.transaction_sn as transactionSn, td.user_sn AS userSn, td.type,
+        td.business_sn AS businessSn, td.amount, td.status,td.time,
+        td.flag, td.mark , td.old_flag AS oldFlag , td.after_balance_amount AS afterBalanceAmount ,
+        td.operator_userid AS operatorUserid , td.is_replenishment AS isReplenishment , td.out_user_sn AS outUserSn ,
+        td.final_statements_sn AS finalStatementsSn , td.business_type AS businessType , td.dd_orderno AS ddOrderno ,
+        td.jj_orderno AS jjOrderno , td.yd_orderno AS ydOrderno , td.invoice_sn AS invoiceSn,
+        u.user_id AS userId,u.user_sn AS uUserSn,u.d_type AS dType,u.name,u.mobile
+        FROM pay_center.transaction_detail td
+        LEFT JOIN pay_center.user_little u ON td.user_sn = u.user_sn"
+    u:
+      column: u.user_sn
+      alias: uUserSn
+      realColumn: user_sn	  
+      sql: "SELECT td.id AS id,td.transaction_sn as transactionSn, td.user_sn AS userSn, td.type,
+        td.business_sn AS businessSn, td.amount, td.status,td.time,
+        td.flag, td.mark , td.old_flag AS oldFlag , td.after_balance_amount AS afterBalanceAmount ,
+        td.operator_userid AS operatorUserid , td.is_replenishment AS isReplenishment , td.out_user_sn AS outUserSn ,
+        td.final_statements_sn AS finalStatementsSn , td.business_type AS businessType , td.dd_orderno AS ddOrderno ,
+        td.jj_orderno AS jjOrderno , td.yd_orderno AS ydOrderno , td.invoice_sn AS invoiceSn,
+        u.user_id AS userId,u.user_sn AS uUserSn,u.d_type AS dType,u.name,u.mobile
+        FROM pay_center.transaction_detail td
+        LEFT JOIN pay_center.user_little u ON td.user_sn = u.user_sn "
+  columnMapping:
+    td.transaction_sn: transactionSn
+    u.user_sn: uUserSn
+  secondaryTabRelation:
+    u: [userId,uUserSn,dType,name,mobile]

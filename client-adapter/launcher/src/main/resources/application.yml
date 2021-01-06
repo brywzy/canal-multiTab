@@ -23,17 +23,23 @@ canal.conf:
       url: jdbc:mysql://localhost:3306/order_center?useUnicode=true
       username: root
       password: 123456
+    payCenter:
+      url: jdbc:mysql://localhost:3306/pay_center?useUnicode=true
+      username: root
+      password: 123456
   canalAdapters:
     - instance: example # canal instance Name or mq topic name
       groups:
         - groupId: g1
           outerAdapters:
-            - name: logger
+#            - name: logger
             - name: es7
-              hosts: 127.0.0.1:9200 # 127.0.0.1:9200 for rest mode
+#              hosts: es-cn-n6w1wp9xp0035mea0.elasticsearch.aliyuncs.com:9200 # 127.0.0.1:9200 for rest mode
+              hosts: 127.0.0.1:9200
               properties:
                 mode: rest # or rest
-                # security.auth: test:123456 #  only used for rest mode
+#                security.auth: elastic:Tstyllr@yzhxcql #  only used for rest mode
+#                cluster.name: es-cn-n6w1wp9xp0035mea0
                 cluster.name: elasticsearch
 
 #      - name: rdb

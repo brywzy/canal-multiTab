@@ -262,8 +262,8 @@ public class ExtensionLoader<T> {
         Map<String, Class<?>> extensionClasses = new HashMap<String, Class<?>>();
 
         // 1. plugin folder，customized extension classLoader （jar_dir/plugin）
-        String dir = File.separator + this.getJarDirectoryPath() + File.separator + "plugin";
-//        String dir = "E:\\soft\\canal\\canal.adapter-1.1.4\\plugin";
+//        String dir = File.separator + this.getJarDirectoryPath() + File.separator + "plugin";
+        String dir = "E:\\soft\\canal\\canal.adapter-1.1.4\\plugin";
         File externalLibDir = new File(dir);
         if (!externalLibDir.exists()) {
             externalLibDir = new File(File.separator + this.getJarDirectoryPath() + File.separator + "canal-adapter"

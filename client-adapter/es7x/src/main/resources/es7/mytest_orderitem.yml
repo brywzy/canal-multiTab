@@ -61,7 +61,7 @@ esMapping:
     ul:
       column: ul.user_sn
       alias: ul_user_sn
-      realColumn: user_sn	  
+      realColumn: user_sn
       sql: "SELECT oi.sn as oi_sn,oi.id as oi_id,oi.car_number AS carNumber,oi.driver_name AS driverName,
                   oi.order_business_id AS oi_order_business_id,oi.order_broker_id AS oi_order_broker_id,
                   ob.sn AS orderBusinessSn,ob.flag AS obFlag,ob.id AS ob_id,ob.agent_user_sn AS ob_agent_user_sn,ob.order_common_id AS ob_order_common_id,
@@ -71,7 +71,7 @@ esMapping:
     ioi:
       column: ioi.id
       alias: ioi_id
-      realColumn: id	  
+      realColumn: id
       sql: "SELECT oi.sn as oi_sn,oi.id as oi_id,oi.car_number AS carNumber,oi.driver_name AS driverName,
                   oi.order_business_id AS oi_order_business_id,oi.order_broker_id AS oi_order_broker_id,
                   ioi.amount as ioi_amount,ioi.order_item_id AS ioi_order_item_id,ioi.id as ioi_id
@@ -80,7 +80,7 @@ esMapping:
     iboi:
       column: iboi.id
       alias: iboi_id
-      realColumn: id	  
+      realColumn: id
       sql: "SELECT oi.sn as oi_sn,oi.id as oi_id,oi.car_number AS carNumber,oi.driver_name AS driverName,
                   oi.order_business_id AS oi_order_business_id,oi.order_broker_id AS oi_order_broker_id,
                   iboi.payment_amount as iboi_payment_amount,iboi.order_item_id AS iboi_order_item_id,iboi.id as iboi_id
@@ -89,7 +89,7 @@ esMapping:
     oc:
       column: oc.id
       alias: oc_id
-      realColumn: id	  
+      realColumn: id
       sql: "SELECT oi.sn as oi_sn,oi.id as oi_id,oi.car_number AS carNumber,oi.driver_name AS driverName,
                   oi.order_business_id AS oi_order_business_id,oi.order_broker_id AS oi_order_broker_id,
                   ob.sn AS orderBusinessSn,ob.flag AS obFlag,ob.id AS ob_id,ob.agent_user_sn AS ob_agent_user_sn,ob.order_common_id AS ob_order_common_id,
@@ -100,7 +100,7 @@ esMapping:
     obb:
       column: obb.id
       alias: obb_id
-      realColumn: id	  
+      realColumn: id
       sql: "SELECT oi.sn as oi_sn,oi.id as oi_id,oi.car_number AS carNumber,oi.driver_name AS driverName,
                   oi.order_business_id AS oi_order_business_id,oi.order_broker_id AS oi_order_broker_id,
                   obb.sn AS orderBrokerSn, obb.flag AS obbFlag,obb.id AS obb_id,obb.agent_user_sn AS obb_agent_user_sn,
@@ -111,7 +111,7 @@ esMapping:
     u2:
       column: u2.user_sn
       alias: u2_user_sn
-      realColumn: user_sn	  
+      realColumn: user_sn
       sql: "SELECT oi.sn as oi_sn,oi.id as oi_id,oi.car_number AS carNumber,oi.driver_name AS driverName,
                   oi.order_business_id AS oi_order_business_id,oi.order_broker_id AS oi_order_broker_id,
                   obb.sn AS orderBrokerSn, obb.flag AS obbFlag,obb.id AS obb_id,obb.agent_user_sn AS obb_agent_user_sn,
