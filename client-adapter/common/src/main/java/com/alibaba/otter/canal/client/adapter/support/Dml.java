@@ -152,19 +152,8 @@ public class Dml implements Serializable {
             Dml dml = (Dml)obj;
             if (type.equals(dml.getType()) && database.equals(dml.getDatabase())
                     && table.equals(dml.getTable()) && destination.equals(dml.getDestination())
-                    && groupId!=null && groupId.equals(dml.getGroupId())){
-
-                Set<String> keySet = data.get(0).keySet();
-                Set<String> objKeySet = dml.getData().get(0).keySet();
-
-                if (keySet.size() != objKeySet.size()) {
-                    return false;
-                } else {
-                    for (String key : keySet){
-                        if (!objKeySet.contains(key)) return false;
-                    }
-                }
-                if (type.equalsIgnoreCase("update")){
+                    && (groupId==null || groupId.equals(dml.getGroupId()))){
+                if (type.equalsIgnoreCase("update")) {
                     Set<String> oldKeySet = old.get(0).keySet();
                     Set<String> objOldKeySet = dml.getOld().get(0).keySet();
                     if (oldKeySet.size() != objOldKeySet.size()) {
@@ -190,12 +179,8 @@ public class Dml implements Serializable {
         result = 31 * result + (table != null ? table.hashCode() : 0);
         result = 31 * result + (destination != null ? destination.hashCode() : 0);
         result = 31 * result + (groupId != null ? groupId.hashCode() : 0);
-        Set<String> keys = this.getData().get(0).keySet();
-        for (String key : keys) {
-            result = 31 * result + (key != null ? key.hashCode() : 0);
-        }
         if (type.equalsIgnoreCase("update")){
-            Set<String> oldKeys = this.getData().get(0).keySet();
+            Set<String> oldKeys = this.getOld().get(0).keySet();
             for (String key : oldKeys) {
                 result = 31 * result + (key != null ? key.hashCode() : 0);
             }

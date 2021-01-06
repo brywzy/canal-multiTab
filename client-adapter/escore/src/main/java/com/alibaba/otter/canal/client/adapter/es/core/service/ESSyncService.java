@@ -70,14 +70,6 @@ public class ESSyncService {
                         esSyncConfigs.size(),
                         dml.getDestination());
             }
-            if (logger.isDebugEnabled()) {
-                StringBuilder configIndexes = new StringBuilder();
-                esSyncConfigs
-                        .forEach(esSyncConfig -> configIndexes.append(esSyncConfig.getEsMapping().get_index()).append(" "));
-                logger.debug("DML: {} \nAffected indexes: {}",
-                        JSON.toJSONString(dml, SerializerFeature.WriteMapNullValue),
-                        configIndexes.toString());
-            }
         }
     }
 
@@ -89,7 +81,6 @@ public class ESSyncService {
             }
 
             long begin = System.currentTimeMillis();
-
             String type = dml.getType();
             if (dmls!=null) {
                 if (type != null && type.equalsIgnoreCase("INSERT")) {
@@ -101,6 +92,12 @@ public class ESSyncService {
                 } else {
                     return;
                 }
+                if (logger.isDebugEnabled()) {
+                    logger.debug("DML: {} \nAffected indexes: {}",
+                            JSON.toJSONString(dmls, SerializerFeature.WriteMapNullValue),
+                            config.getEsMapping().get_index());
+                }
+
             }else{
                 if (type != null && type.equalsIgnoreCase("INSERT")) {
                     insert(config, dml);
@@ -110,6 +107,11 @@ public class ESSyncService {
                     delete(config, dml);
                 } else {
                     return;
+                }
+                if (logger.isDebugEnabled()) {
+                    logger.debug("DML: {} \nAffected indexes: {}",
+                            JSON.toJSONString(dml, SerializerFeature.WriteMapNullValue),
+                            config.getEsMapping().get_index());
                 }
             }
             if (logger.isTraceEnabled()) {
@@ -196,7 +198,6 @@ public class ESSyncService {
             } else {
                 // ------是主表 查询sql来插入------
                 if (schemaItem.getMainTable().getTableName().equalsIgnoreCase(dml.getTable())) {
-                    //TODO 如果这里主表执行语句的时候很慢，可以进行分拆执行然后拼接结果集
                     mainTableInsert(config, dml,schemaItem.getMainTable().getAlias(), data);
                 }else {
                     // 从表的操作
