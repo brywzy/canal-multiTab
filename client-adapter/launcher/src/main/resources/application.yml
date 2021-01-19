@@ -34,18 +34,21 @@ canal.conf:
           outerAdapters:
             - name: logger
             - name: es7
-              #              hosts: es-cn-n6w1wp9xp0035mea0.elasticsearch.aliyuncs.com:9200 # 127.0.0.1:9200 for rest mode
+#              hosts: es-cn-n6w1wp9xp0035mea0.elasticsearch.aliyuncs.com:9200 # 127.0.0.1:9200 for rest mode
               hosts: 127.0.0.1:9200
               properties:
                 mode: rest # or rest
-                #                security.auth: elastic:Tstyllr@yzhxcql #  only used for rest mode
-                #                cluster.name: es-cn-n6w1wp9xp0035mea0
+#                security.auth: elastic:Tstyllr@yzhxcql #  only used for rest mode
+#                cluster.name: es-cn-n6w1wp9xp0035mea0
                 cluster.name: elasticsearch
 #    - instance: example # canal instance Name or mq topic name
 #      groups:
 #        - groupId: g2
 #          outerAdapters:
 #            - name: logger
+
+
+
 
 #      - name: rdb
 #        key: mysql1
