@@ -99,7 +99,6 @@ public class Util {
                 path + ".." + File.separator + Constant.CONF_DIR + File.separator + StringUtils.trimToEmpty(subConf));
             if (!file.exists()) {
                 file = new File(path + StringUtils.trimToEmpty(subConf));
-//                file = new File("E:\\soft\\canal\\canal.adapter-1.1.4\\conf"+ File.separator + StringUtils.trimToEmpty(subConf));
             }
         }
         if (file == null || !file.exists()) {

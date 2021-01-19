@@ -28,11 +28,11 @@ canal.conf:
       username: root
       password: 123456
   canalAdapters:
-    - instance: example # canal instance Name or mq topic name
+    - instance: xy # canal instance Name or mq topic name
       groups:
         - groupId: g1
           outerAdapters:
-#            - name: logger
+            - name: logger
             - name: es7
 #              hosts: es-cn-n6w1wp9xp0035mea0.elasticsearch.aliyuncs.com:9200 # 127.0.0.1:9200 for rest mode
               hosts: 127.0.0.1:9200

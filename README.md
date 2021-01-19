@@ -98,3 +98,22 @@ canal 作为 MySQL binlog 增量获取和解析工具，可将变更记录投递
 ## 其他资料
 
   - [ ADC 阿里技术嘉年华分享 ppt ( google docs)](https://docs.google.com/presentation/d/1MkszUPYRDkfVPz9IqOT1LLT5d9tuwde_WC8GZvjaDRg/edit?usp=sharing) 
+
+
+===============================
+
+mysql  binlog查看
+
+```sql
+#查看binlog数据格式
+SHOW VARIABLES LIKE 'binlog_format';
+
+#查看binlog
+SHOW BINARY LOGS;	
+
+#查看当前正在写入的binlog
+SHOW MASTER STATUS;
+
+#查看某个binlong文件
+SHOW BINLOG EVENTS IN 'mysql-bin.000007';
+```

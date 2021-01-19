@@ -7,8 +7,11 @@ esMapping:
   #  _type: _doc                   # es 的type名称, es7下无需配置此项
   _id: id                      # es 的_id, 如果不配置该项必须配置下面的pk项_id则会由es自动分配
   #  pk: id                       # 如果不需要_id, 则需要指定一个属性为主键属性
-  # sql映射
-  sql: "SELECT td.id AS id,td.transaction_sn as transactionSn, td.user_sn AS userSn, td.type,
+  # sql映射  
+  etlCondition: "where td.id>={}"     # etl 的条件参数
+  commitBatch: 2000                         # 提交批大小  
+  
+  sql: "SELECT td.id,td.transaction_sn as transactionSn, td.user_sn AS userSn, td.type,
         td.business_sn AS businessSn, td.amount, td.status,td.time,
         td.flag, td.mark , td.old_flag AS oldFlag , td.after_balance_amount AS afterBalanceAmount ,
         td.operator_userid AS operatorUserid , td.is_replenishment AS isReplenishment , td.out_user_sn AS outUserSn ,
@@ -21,9 +24,9 @@ esMapping:
   sqlConditionFields:
     td:
       column: td.id
-      alias: id
-      realColumn: id
-      sql: "SELECT td.id AS id,td.transaction_sn as transactionSn, td.user_sn AS userSn, td.type,
+      alias: td_id
+      realColumn: transaction_sn
+      sql: "SELECT td.id,td.transaction_sn as transactionSn, td.user_sn AS userSn, td.type,
         td.business_sn AS businessSn, td.amount, td.status,td.time,
         td.flag, td.mark , td.old_flag AS oldFlag , td.after_balance_amount AS afterBalanceAmount ,
         td.operator_userid AS operatorUserid , td.is_replenishment AS isReplenishment , td.out_user_sn AS outUserSn ,
@@ -46,7 +49,7 @@ esMapping:
         FROM pay_center.transaction_detail td
         LEFT JOIN pay_center.user_little u ON td.user_sn = u.user_sn "
   columnMapping:
-    td.transaction_sn: transactionSn
+    td.transaction_sn: td_transaction_sn
     u.user_sn: uUserSn
   secondaryTabRelation:
     u: [userId,uUserSn,dType,name,mobile]
