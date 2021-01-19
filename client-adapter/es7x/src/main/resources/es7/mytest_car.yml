@@ -1,0 +1,92 @@
+dataSourceKey: defaultDS        # 源数据源的key, 对应上面配置的srcDataSources中的值
+#outerAdapterKey: es1     # 对应application.yml中es配置的key
+destination: xy            # cannal的instance或者MQ的topic
+groupId: g1                   # 对应MQ模式下的groupId, 只会同步对应groupId的数据
+esMapping:
+  _index: car_driving           # es 的索引名称
+  #  _type: _doc                   # es 的type名称, es7下无需配置此项
+  _id: id                      # es 的_id, 如果不配置该项必须配置下面的pk项_id则会由es自动分配
+  #  pk: id                       # 如果不需要_id, 则需要指定一个属性为主键属性
+  # sql映射
+  sql: "SELECT cd.plate_number plateNumber,  cd.sum_capacity_tonnage sumCapacityTonnage, cd.priority priority,
+   cd.capacity_tonnage capacityTonnage, cd.axle_number axleNumber, cd.id id, cd.type type, cd.created_date createdDate,
+   cd.car_id carId, cd.STATUS status, cd.update_user_nick updateUserNick, cd.update_user_name updateUserName, 
+   DATE_FORMAT(cd.update_date_time,'%Y-%m-%d %h:%i:%s') updateDateTime, ule.name driverName, substr(ule.mobile,3) driverMobile, uleowner.mobile AS ownerMobile, 
+   uleowner.name AS boss, crr.reason priorityReason, cd.member_id,ule.user_id as ule_user_id, c.id  as c_id,c.owner_id as c_owner_id,
+   uleowner.user_id as uleowner_user_id,cd.priority_reason_id as cd_priority_reason_id,crr.id as crr_id
+   FROM car_driving AS cd LEFT  JOIN user_little ule ON cd.member_id=ule.user_id 
+   LEFT JOIN car c ON cd.car_id=c.id 
+   LEFT  JOIN user_little uleowner ON c.owner_id=uleowner.user_id 
+   LEFT JOIN car_reject_reason crr ON cd.priority_reason_id=crr.id"
+  sqlConditionFields:
+    cd: 
+      column: cd.id
+      alias: id
+      sql: "SELECT cd.plate_number plateNumber,  cd.sum_capacity_tonnage sumCapacityTonnage, cd.priority priority,
+               cd.capacity_tonnage capacityTonnage, cd.axle_number axleNumber, cd.id id, cd.type type, cd.created_date createdDate,
+               cd.car_id carId, cd.STATUS status, cd.update_user_nick updateUserNick, cd.update_user_name updateUserName,
+               DATE_FORMAT(cd.update_date_time,'%Y-%m-%d %h:%i:%s') updateDateTime, ule.name driverName, substr(ule.mobile,3) driverMobile, uleowner.mobile AS ownerMobile,
+               uleowner.name AS boss, crr.reason priorityReason, cd.member_id,ule.user_id as ule_user_id, c.id  as c_id,c.owner_id as c_owner_id,
+               uleowner.user_id as uleowner_user_id,cd.priority_reason_id as cd_priority_reason_id,crr.id as crr_id
+               FROM car_driving AS cd LEFT  JOIN user_little ule ON cd.member_id=ule.user_id
+               LEFT JOIN car c ON cd.car_id=c.id
+               LEFT  JOIN user_little uleowner ON c.owner_id=uleowner.user_id
+               LEFT JOIN car_reject_reason crr ON cd.priority_reason_id=crr.id"
+    ule: 
+      column: ule.user_id
+      alias: ule_user_id
+      sql: "SELECT cd.plate_number plateNumber,  cd.sum_capacity_tonnage sumCapacityTonnage, cd.priority priority,
+               cd.capacity_tonnage capacityTonnage, cd.axle_number axleNumber, cd.id id, cd.type type, cd.created_date createdDate,
+               cd.car_id carId, cd.STATUS status, cd.update_user_nick updateUserNick, cd.update_user_name updateUserName,
+               DATE_FORMAT(cd.update_date_time,'%Y-%m-%d %h:%i:%s') updateDateTime, ule.name driverName, substr(ule.mobile,3) driverMobile, uleowner.mobile AS ownerMobile,
+               uleowner.name AS boss, cd.member_id,ule.user_id as ule_user_id, c.id  as c_id,c.owner_id as c_owner_id,
+               uleowner.user_id as uleowner_user_id,cd.priority_reason_id as cd_priority_reason_id
+               FROM car_driving AS cd LEFT  JOIN user_little ule ON cd.member_id=ule.user_id
+               LEFT JOIN car c ON cd.car_id=c.id
+               LEFT  JOIN user_little uleowner ON c.owner_id=uleowner.user_id"
+    c: 
+      column: c.id
+      alias: c_id
+      sql: "SELECT cd.plate_number plateNumber,  cd.sum_capacity_tonnage sumCapacityTonnage, cd.priority priority,
+               cd.capacity_tonnage capacityTonnage, cd.axle_number axleNumber, cd.id id, cd.type type, cd.created_date createdDate,
+               cd.car_id carId, cd.STATUS status, cd.update_user_nick updateUserNick, cd.update_user_name updateUserName,
+               DATE_FORMAT(cd.update_date_time,'%Y-%m-%d %h:%i:%s') updateDateTime, ule.name driverName, substr(ule.mobile,3) driverMobile, uleowner.mobile AS ownerMobile,
+               uleowner.name AS boss, cd.member_id,ule.user_id as ule_user_id, c.id  as c_id,c.owner_id as c_owner_id,
+               uleowner.user_id as uleowner_user_id,cd.priority_reason_id as cd_priority_reason_id
+               FROM car_driving AS cd LEFT  JOIN user_little ule ON cd.member_id=ule.user_id
+               LEFT JOIN car c ON cd.car_id=c.id
+               LEFT  JOIN user_little uleowner ON c.owner_id=uleowner.user_id"
+    uleowner: 
+      column: uleowner.user_id
+      alias: uleowner_user_id
+      sql: "SELECT cd.plate_number plateNumber,  cd.sum_capacity_tonnage sumCapacityTonnage, cd.priority priority,
+               cd.capacity_tonnage capacityTonnage, cd.axle_number axleNumber, cd.id id, cd.type type, cd.created_date createdDate,
+               cd.car_id carId, cd.STATUS status, cd.update_user_nick updateUserNick, cd.update_user_name updateUserName,
+               DATE_FORMAT(cd.update_date_time,'%Y-%m-%d %h:%i:%s') updateDateTime, ule.name driverName, substr(ule.mobile,3) driverMobile, uleowner.mobile AS ownerMobile,
+               uleowner.name AS boss, cd.member_id,ule.user_id as ule_user_id, c.id  as c_id,c.owner_id as c_owner_id,
+               uleowner.user_id as uleowner_user_id,cd.priority_reason_id as cd_priority_reason_id
+               FROM car_driving AS cd LEFT  JOIN user_little ule ON cd.member_id=ule.user_id
+               LEFT JOIN car c ON cd.car_id=c.id
+               LEFT  JOIN user_little uleowner ON c.owner_id=uleowner.user_id"
+    crr: 
+      column: crr.id
+      alias: crr_id
+      sql: "SELECT cd.plate_number plateNumber,  cd.sum_capacity_tonnage sumCapacityTonnage, cd.priority priority,
+               cd.capacity_tonnage capacityTonnage, cd.axle_number axleNumber, cd.id id, cd.type type, cd.created_date createdDate,
+               cd.car_id carId, cd.STATUS status, cd.update_user_nick updateUserNick, cd.update_user_name updateUserName,
+               DATE_FORMAT(cd.update_date_time,'%Y-%m-%d %h:%i:%s') updateDateTime,
+               crr.reason priorityReason, cd.member_id,
+               cd.priority_reason_id as cd_priority_reason_id,crr.id as crr_id
+               LEFT JOIN car_reject_reason crr ON cd.priority_reason_id=crr.id"
+  columnMapping: 
+#    cd.id: id
+    ule.user_id: ule_user_id
+    c.id: c_id
+    uleowner.user_id: uleowner_user_id
+    crr.id: crr_id
+  secondaryTabRelation: 
+    ule: [driverName,driverMobile,ule_user_id,]
+    c: [c_id,c_owner_id,ownerMobile,boss,uleowner_user_id]
+    uleowner: [ownerMobile,boss,uleowner_user_id]
+    crr: [priorityReason,crr_id]  
+

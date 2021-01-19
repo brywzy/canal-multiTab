@@ -1,7 +1,7 @@
 dataSourceKey: payCenter        # 源数据源的key, 对应上面配置的srcDataSources中的值
 #outerAdapterKey: es1     # 对应application.yml中es配置的key
 destination: example            # cannal的instance或者MQ的topic
-groupId: g1                   # 对应MQ模式下的groupId, 只会同步对应groupId的数据
+groupId: g2                   # 对应MQ模式下的groupId, 只会同步对应groupId的数据
 esMapping:
   _index: transaction_detail           # es 的索引名称
   #  _type: _doc                   # es 的type名称, es7下无需配置此项
